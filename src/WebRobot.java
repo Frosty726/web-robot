@@ -10,6 +10,8 @@ public class WebRobot {
     private static URLPool checked;
     private static URLPool unchecked;
 
+    private static RoboTask[] threads;
+
     /**
      * Main method
      * **/
@@ -45,7 +47,7 @@ public class WebRobot {
             unchecked = new URLPool();
             unchecked.put(new URLDepthPair(url, 0));
 
-            RoboTask[] threads = new RoboTask[numThreads];
+            threads = new RoboTask[numThreads];
 
             /** Threads running **/
             for (int i = 0; i < numThreads; ++i) {
@@ -53,17 +55,23 @@ public class WebRobot {
                 threads[i].start();
             }
 
-            try {
-                for (int i = 0; i < numThreads; ++i) {
-                    threads[i].join();
+            while (true) {
+                try {
+                    if (unchecked.getWaitCount() != numThreads) {
+                        Thread.sleep(100);
+                    }
+                    else
+                        break;
                 }
-            }
-            catch (InterruptedException e) {
-                System.out.println(e.getMessage());
+                catch (InterruptedException e) {
+                    System.out.println(e.getMessage());
+                }
             }
 
             /** Result printing **/
             checked.printContent();
+
+            System.exit(0);
 
         } catch (NoSuchElementException e) {
             System.out.println(e.getMessage());

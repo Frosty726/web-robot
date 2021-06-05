@@ -10,7 +10,7 @@ public class RoboTask extends Thread {
 
     private Socket socket;
     private BufferedReader in;
-    private  PrintWriter out;
+    private PrintWriter out;
 
     private static final String URL_PREFIX = "http://";
     private static final String A_HREF = "<a href=\"";
@@ -24,19 +24,23 @@ public class RoboTask extends Thread {
     }
 
     public void run() {
-        while (!unchecked.isEmpty()) {
+        while (true) {
             try {
                 URLDepthPair pair = unchecked.get();
-                if (pair.isRightURL() && pair.depth < depth && !isChecked(pair))
+                if (pair != null && pair.isRightURL() && !isChecked(pair))
                     checkURL(pair);
-            }
-            catch (InterruptedException e) {
+            } catch (InterruptedException e) {
                 System.out.println(e.getMessage());
             }
         }
     }
 
     private void checkURL(URLDepthPair pair) {
+        if (pair.depth >= depth) {
+            checked.put(pair);
+            return;
+        }
+
         try {
             try {
                 socket = new Socket(url.substring(URL_PREFIX.length()), 80);
@@ -59,7 +63,8 @@ public class RoboTask extends Thread {
                     hrefIndex = line.indexOf(A_HREF) + A_HREF.length();
                     if (hrefIndex != A_HREF.length() - 1) {
                         String resource = line.substring(hrefIndex, line.indexOf(A_HREF_END, hrefIndex));
-                        unchecked.put(new URLDepthPair(resource, pair.depth + 1));
+                        URLDepthPair found = new URLDepthPair(resource, pair.depth + 1);
+                        if (!isChecked(found)) unchecked.put(found);
                     }
                     line = in.readLine();
                 }
